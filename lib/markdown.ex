@@ -28,10 +28,10 @@ defmodule Markdown do
 
   """
   @spec to_html(doc :: String.t) :: String.t
-  @spec to_html(doc :: String.t, options :: Keyword.t) :: String.t
-  def to_html(doc, options \\ [])
+  @spec to_html(doc :: String.t, options :: Keyword.t, dirty_scheduler :: boolean) :: String.t
+  def to_html(doc, options \\ [], dirty_scheduler \\ true)
 
-  def to_html(_, _) do
+  def to_html(_, _, _) do
     exit(:nif_library_not_loaded)
   end
 end

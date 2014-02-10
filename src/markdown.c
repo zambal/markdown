@@ -8,16 +8,18 @@
 #include "html.h"
 
 #define OUTPUT_UNIT 128
-#define MAX_INPUT_SIZE_SHORT_JOB 20000
 
 static int
-is_short_job(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-  ErlNifBinary input;
-  if (enif_inspect_binary(env, argv[0], &input) == 0) {
-    return -1;
-  }  
+use_dirty_scheduler(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  ERL_NIF_TERM dirty_scheduler = argv[2];
+  ERL_NIF_TERM atom_true = enif_make_atom(env, "true");
   
-  return input.size < MAX_INPUT_SIZE_SHORT_JOB;
+  if (enif_compare(dirty_scheduler, atom_true) == 0) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
 }
 
 static ERL_NIF_TERM
@@ -29,14 +31,12 @@ do_job(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   ERL_NIF_TERM atom_true;
   ERL_NIF_TERM atom_tables;
   ERL_NIF_TERM atom_autolink;
-  ERL_NIF_TERM atom_fenced_code;
-  
+  ERL_NIF_TERM atom_fenced_code;  
   ERL_NIF_TERM term;
   const ERL_NIF_TERM* tuple;
   int tuple_size;
   
   unsigned int extensions;
-
   hoedown_buffer* ob;
   hoedown_markdown* markdown;
   hoedown_renderer* renderer;
@@ -107,11 +107,11 @@ do_dirty_job(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 static ERL_NIF_TERM
 to_html(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 #ifdef ERL_NIF_DIRTY_SCHEDULER_SUPPORT
-  if(is_short_job(env, argc, argv)) {
-    return do_job(env, argc, argv);
+  if(use_dirty_scheduler(env, argc, argv)) {
+    return enif_schedule_dirty_nif(env, ERL_NIF_DIRTY_JOB_CPU_BOUND, do_dirty_job, argc, argv);
   }
   else {
-    return enif_schedule_dirty_nif(env, ERL_NIF_DIRTY_JOB_CPU_BOUND, do_dirty_job, argc, argv);
+    return do_job(env, argc, argv);
   }
 #else
   return do_job(env, argc, argv);
@@ -119,7 +119,7 @@ to_html(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 }
 
 static ErlNifFunc funcs[] = {
-  { "to_html", 2, to_html }
+  { "to_html", 3, to_html }
 };
 
 ERL_NIF_INIT(Elixir.Markdown, funcs, NULL, NULL, NULL, NULL)
