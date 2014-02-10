@@ -10,14 +10,6 @@
 #define OUTPUT_UNIT 128
 #define MAX_INPUT_SIZE_SHORT_JOB 20000
 
-typedef struct {
-  ERL_NIF_TERM atom_true;
-  ERL_NIF_TERM atom_false;
-  ERL_NIF_TERM atom_tables;
-  ERL_NIF_TERM atom_autolink;
-  ERL_NIF_TERM atom_fenced_code;
-} markdown_priv;
-
 static int
 is_short_job(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   ErlNifBinary input;
